@@ -1,0 +1,8 @@
+List Slicing:
+
+capitals = ['panjim', 'bhubaneswar', 'guwahati', 'aizwal', 'imphal', 'agartala', 'ganktok', 'kohima', 'itanagar', 'shilong']
+
+print(capitals)
+print(capitals[])
+---------------------------------------------
+STRING CLASS METHODS:
