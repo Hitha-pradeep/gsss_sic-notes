@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Retail Sales Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    canvas {
+      max-height: 350px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#">Retail Dashboard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+            data-bs-target="#navbarNav" aria-controls="navbarNav" 
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Container -->
+<div class="container py-5">
+
+  <h2 class="text-center mb-5 fw-bold text-dark">📈 Sales Dashboard</h2>
+
+  <!-- Store Totals -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4 class="card-title">🏬 Store-wise Total Sales</h4>
+      <table class="table table-hover mt-3">
+        <thead class="table-primary">
+          <tr><th>StoreID</th><th>Total Sales</th></tr>
+        </thead>
+        <tbody>
+          {% for row in tables.store_totals %}
+          <tr><td>{{ row.StoreID }}</td><td>{{ row.TotalSales }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Weekday Average -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4 class="card-title">📅 Weekday Average Sales</h4>
+      <table class="table table-hover mt-3">
+        <thead class="table-success">
+          <tr><th>Weekday</th><th>Avg Sales</th></tr>
+        </thead>
+        <tbody>
+          {% for row in tables.weekday_avg %}
+          <tr><td>{{ row.Weekday }}</td><td>{{ row.AvgSalesPerDay }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Top 3 Stores -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h4 class="card-title">🥇 Top 3 Stores</h4>
+      <ul class="list-group list-group-flush mt-3">
+        {% for row in tables.top3 %}
+        <li class="list-group-item">Store {{ row.StoreID }} → <strong>{{ row.TotalSales }}</strong></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h3 class="card-title mb-4">📊 Visualizations</h3>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <canvas id="storeChart"></canvas>
+        </div>
+        <div class="col-md-6">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+      <div class="row mt-4">
+        <div class="col-md-6 offset-md-3">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Downloads -->
+  <div class="card mb-4">
+    <div class="card-body text-center">
+      <h4 class="card-title mb-3">⬇️ Download Processed CSVs</h4>
+      <a href="/download/cleaned_retail_sales.csv" class="btn btn-success m-1">Cleaned Data</a>
+      <a href="/download/store_sales_summary.csv" class="btn btn-info m-1">Store Totals</a>
+      <a href="/download/weekday_sales_summary.csv" class="btn btn-warning m-1">Weekday Summary</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart Scripts -->
+<script>
+  // Bar Chart: Store Totals
+  const ctx1 = document.getElementById('storeChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: [{% for row in tables.store_totals %}'{{ row.StoreID }}',{% endfor %}],
+      datasets: [{
+        label: 'Total Sales',
+        data: [{% for row in tables.store_totals %}{{ row.TotalSales }},{% endfor %}],
+        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+        borderRadius: 6
+      }]
+    }
+  });
+
+  // Line Chart: Weekday Averages
+  const ctx2 = document.getElementById('lineChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: [{% for row in tables.weekday_avg %}'{{ row.Weekday }}',{% endfor %}],
+      datasets: [{
+        label: 'Avg Sales per Day',
+        data: [{% for row in tables.weekday_avg %}{{ row.AvgSalesPerDay }},{% endfor %}],
+        fill: false,
+        borderColor: 'rgba(255, 99, 132, 0.9)',
+        tension: 0.3,
+        pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+        pointRadius: 5
+      }]
+    }
+  });
+
+  // Pie Chart: Store Contribution
+  const ctx3 = document.getElementById('pieChart').getContext('2d');
+  new Chart(ctx3, {
+    type: 'pie',
+    data: {
+      labels: [{% for row in tables.store_totals %}'Store {{ row.StoreID }}',{% endfor %}],
+      datasets: [{
+        label: 'Sales Contribution',
+        data: [{% for row in tables.store_totals %}{{ row.TotalSales }},{% endfor %}],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(153, 102, 255, 0.6)'
+        ],
+        borderWidth: 1
+      }]
+    }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
